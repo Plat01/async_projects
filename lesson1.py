@@ -1,51 +1,52 @@
 import asyncio
 import curses
 
+import random
 import time
 
 
 async def blink(canvas, row, column, symbol='*'):
     while True:
         canvas.addstr(row, column, symbol, curses.A_DIM)
-        await asyncio.sleep(0)
+        await asyncio.sleep(2)
 
         canvas.addstr(row, column, symbol)
-        await asyncio.sleep(0)
+        for i in range(3):
+            await asyncio.sleep(0)
 
         canvas.addstr(row, column, symbol, curses.A_BOLD)
-        await asyncio.sleep(0)
+        for i in range(5):
+            await asyncio.sleep(0)
 
         canvas.addstr(row, column, symbol)
-        await asyncio.sleep(0)
+        for i in range(3):
+            await asyncio.sleep(0)
 
 
 def draw(canvas):
+    tic_timeout = 0.1
+    shapes = '+*.:'
     curses.curs_set(False)
     canvas.border()
-    rows, columns = 3, 20
-    coroutine = blink(canvas=canvas, row=rows, column=columns)
-    i = 0
+    rows, columns = curses.window.getmaxyx(
+        canvas)  # сказали бы хоть что метод требует аргумента. В документации нет этого
+    coroutines = []
+    for i in range(100):
+        coroutine = blink(canvas=canvas,
+                          row=random.randrange(1, rows - 1),
+                          column=random.randrange(1, columns - 1),
+                          symbol=random.choice(shapes))
+        coroutines.append(coroutine)
     while True:
-        if i == 0:
+        for coroutine in coroutines:
             coroutine.send(None)
-            time.sleep(.02)
-        elif i == 1:
-            coroutine.send(None)
-            time.sleep(0.03)
-        elif i == 2:
-            coroutine.send(None)
-            time.sleep(0.05)
-        else:
-            coroutine.send(None)
-            time.sleep(0.03)
-        i = (i + 1) % 4
-        rows = (rows + 1) % 7
-        canvas.refresh()
+            canvas.refresh()
+        time.sleep(tic_timeout)
 
 
 if __name__ == '__main__':
     curses.update_lines_cols()
     curses.wrapper(draw)
-    # print(type(blink(draw, 3, 3, ";")), dir(blink(draw, 3, 3, ";")))
+
 
 
